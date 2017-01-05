@@ -17,7 +17,7 @@ module.exports = function (fileGlobs, opt) {
 
   function concatBuffersOnly(files, filename) {
     //no source maps, do it fast
-    for(var i = 0; i < files.length; i++) {
+    for (var i = 0; i < files.length; i++) {
       files[i] = files[i].contents;
     }
 
@@ -31,13 +31,13 @@ module.exports = function (fileGlobs, opt) {
 
   function concatWithSourceMap(files, filename) {
     var outFile, i, sourceStream, inFiles = {};
-    for(i = 0; i < files.length; i++) {
+    for (i = 0; i < files.length; i++) {
       if (!inFiles[files[i].path]) {
         inFiles[files[i].path] = files[i].contents.toString();
       }
     }
     sourceStream = new Concat(filename, opt.newLine || '\n');
-    for(i = 0; i < files.length; i++) {
+    for (i = 0; i < files.length; i++) {
       sourceStream.add(files[i].relative, inFiles[files[i].path], files[i].sourceMap);
     }
     outFile = new gUtil.File({
@@ -61,18 +61,21 @@ module.exports = function (fileGlobs, opt) {
   }
 
   return through.obj(function (file, encoding, cb) {
+    var self = this;
 
     _.each(fileGlobs, function (fileglob, filename) {
       var path = file.cwd ? file.path.substring(file.cwd.length + 1) : file.path;
       var matches = glob.match(fileglob, path);
       if (matches.length) {
         addContent(filename, file)
+      } else {
+        self.push(file)
       }
     });
 
     //save the files until they're done streaming/buffering
     cb()
-  }, function (cb){
+  }, function (cb) {
     var self = this;
 
     //once they're done giving us files, we give them the concatenated results
